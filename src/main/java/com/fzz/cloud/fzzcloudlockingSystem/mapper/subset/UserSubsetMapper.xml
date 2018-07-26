@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.fzz.cloud.fzzcloudlockingSystem.mapper.subset.UserSubsetMapper" >
+  <resultMap id="BaseResultMap" type="com.fzz.cloud.fzzcloudlockingSystem.entity.subset.UserSubset" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="lock_id" property="lockId" jdbcType="VARCHAR" />
+    <result column="user_id" property="userId" jdbcType="VARCHAR" />
+    <result column="parent_id" property="parentId" jdbcType="VARCHAR" />
+    <result column="key_name" property="keyName" jdbcType="VARCHAR" />
+    <result column="start_time" property="startTime" jdbcType="TIMESTAMP" />
+    <result column="end_time" property="endTime" jdbcType="TIMESTAMP" />
+    <result column="statu" property="statu" jdbcType="INTEGER" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, lock_id, user_id, parent_id, key_name, start_time, end_time, statu
+  </sql>
+  
+  <select id="selectUserSubsetInfo" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from syslock_user_subset
+    where id = #{id,jdbcType=VARCHAR} AND statu = 0
+  </select>
+  
+  <!-- 根据用户和锁查询钥匙 -->
+  <select id="selectUserSubsetByLockIdAndUserId" parameterType="java.lang.String" resultMap="BaseResultMap">
+  	select
+  	<include refid="Base_Column_List"/>
+  	from syslock_user_subset
+  	<where>
+  		statu = 0
+  		<if test="lockId != null">
+  			and lock_id = #{lockId,jdbcType=VARCHAR}
+  		</if>
+  		<if test="userId != null">
+  			and user_id = #{userId,jdbcType=VARCHAR}
+  		</if>
+  	</where>
+  </select>
+  
+  <!-- 查找这个用户下的所有锁 -->
+  <select id="selectUserSubsetByUserId" parameterType="java.lang.String" resultMap="BaseResultMap">
+  	select
+  	<include refid="Base_Column_List"/>
+  	from syslock_user_subset
+  	<where>
+  		statu = 0
+  		<if test="userId != null">
+  			and user_id = #{userId,jdbcType=VARCHAR}
+  		</if>
+  	</where>
+  </select>
+  
+  <!-- 根据多个id查询所有钥匙 -->
+  <select id="selectSubsetByIds">
+  	select
+  	<include refid="Base_Column_List"/>
+  	from syslock_user_subset
+  	<where>
+  		statu = 0 AND id in
+  		<foreach collection="ids" item="id" open="(" close=")" separator=",">
+  			#{id}
+  		</foreach>
+  	</where>
+  </select>
+  
+  <select id="selectUserSubsetPage" resultMap="BaseResultMap">
+  	select 
+  	<include refid="Base_Column_List"/>
+  	from syslock_user_subset
+  	<where>
+  		id in
+  		  <foreach item="userId" collection="userIds" separator="," open="(" close=")" index="">
+               (select s.id from syslock_user_subset as s where s.user_id = #{userId} and s.lock_id = #{lockId} and s.statu = 0)
+          </foreach>
+  	</where>
+          ORDER BY syslock_user_subset.createtime DESC
+  </select>
+  
+  <select id="sqlGroup" resultType="String" parameterType="java.lang.String">
+     select parent_id from  syslock_user_subset sus where sus.lock_id=#{lockId} group by sus.parent_id
+  </select>
+  
+  <select id="selectListUserSubset" parameterType="java.lang.String" resultMap="BaseResultMap">
+  	select  
+  		<include refid="Base_Column_List"/>
+  	 from  syslock_user_subset where lock_id = #{lockId}
+  </select>
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from syslock_user_subset
+    where id = #{id,jdbcType=VARCHAR}
+  </delete>
+  
+  <insert id="insert" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.subset.UserSubset" >
+    insert into syslock_user_subset (id, lock_id, user_id, 
+      parent_id, key_name, start_time, 
+      end_time, statu)
+    values (#{id,jdbcType=VARCHAR}, #{lockId,jdbcType=VARCHAR}, #{userId,jdbcType=VARCHAR}, 
+      #{parentId,jdbcType=VARCHAR}, #{keyName,jdbcType=VARCHAR}, #{startTime,jdbcType=TIMESTAMP}, 
+      #{endTime,jdbcType=TIMESTAMP}, #{statu,jdbcType=INTEGER})
+  </insert>
+  
+  <!-- 添加用户子集parentid为空为爷爷 -->
+  <insert id="insertUserSubset" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.subset.UserSubset" >
+    insert into syslock_user_subset
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+       <if test="id != null" >
+        id,
+      </if>
+      <if test="lockId != null" >
+        lock_id,
+      </if>
+      <if test="userId != null" >
+        user_id,
+      </if>
+      <if test="parentId != null" >
+        parent_id,
+      </if>
+      <if test="keyName != null" >
+        key_name,
+      </if>
+      <if test="startTime != null" >
+        start_time,
+      </if>
+      <if test="endTime != null" >
+        end_time,
+      </if>
+        statu,createtime
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+       <if test="id != null" >
+        #{id,jdbcType=VARCHAR},
+      </if>
+      <if test="lockId != null" >
+        #{lockId,jdbcType=VARCHAR},
+      </if>
+      <if test="userId != null" >
+        #{userId,jdbcType=VARCHAR},
+      </if>
+      <if test="parentId != null" >
+        #{parentId,jdbcType=VARCHAR},
+      </if>
+      <if test="keyName != null" >
+        #{keyName,jdbcType=VARCHAR},
+      </if>
+      <if test="startTime != null" >
+        #{startTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="endTime != null" >
+        #{endTime,jdbcType=TIMESTAMP},
+      </if>
+       0,now()
+    </trim>
+  </insert>
+  
+  <!-- 批量增加 -->
+  <insert id="insertBatchUserSubset" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.subset.UserSubset">
+  	 insert into syslock_user_subset(id,lock_id,user_id,parent_id,key_name,statu) values
+	    <foreach collection="addList" item="userSubset" open="" close="" separator=",">
+	  		(uuid(),#{userSubset.lockId},#{userSubset.userId},#{userSubset.parentId},#{userSubset.keyName}, 0)
+	  	</foreach>
+  </insert>
+  
+  <!-- 批量修改 -->
+  <update id="updateBatchUserSubset" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.subset.UserSubset">
+  	<foreach collection="updateList" item="userSubset" index="index" open="" close="" separator=";">
+       update syslock_user_subset
+		<set>
+			parent_id = #{userSubset.parentId,jdbcType=VARCHAR} , end_time = #{userSubset.endTime,jdbcType=VARCHAR}
+		</set>
+	   <where>
+	   id = #{userSubset.id}
+	   </where> 
+    </foreach>  
+  </update>
+  
+  <update id="updateSysLockName" parameterType="java.lang.String">
+  	update syslock_user_subset set key_name = #{keyName} where id = #{id}
+  </update>
+  
+  <!-- 更新子集操作 -->
+  <update id="updateUserSubset" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.subset.UserSubset" >
+    update syslock_user_subset
+    <set >
+       <if test="statu != null" >
+        statu = #{statu,jdbcType=INTEGER},
+      </if>
+      <if test="keyName != null" >
+        key_name = #{keyName,jdbcType=VARCHAR},
+      </if>
+      <if test="startTime != null" >
+        start_time = #{startTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="endTime != null" >
+        end_time = #{endTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+  
+  <update id="updateUserSubsetByIds" parameterType="list">
+  	update syslock_user_subset
+  	set statu = 1
+  	<where>
+  		id in 
+  		<foreach collection="list" item="id" open="(" close=")" separator=",">
+  			#{id}
+  		</foreach>
+  	</where>
+  </update>
+  
+  <update id="updateByPrimaryKey" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.subset.UserSubset" >
+    update syslock_user_subset
+    set lock_id = #{lockId,jdbcType=VARCHAR},
+      user_id = #{userId,jdbcType=VARCHAR},
+      parent_id = #{parentId,jdbcType=VARCHAR},
+      key_name = #{keyName,jdbcType=VARCHAR},
+      start_time = #{startTime,jdbcType=TIMESTAMP},
+      end_time = #{endTime,jdbcType=TIMESTAMP},
+      statu = #{statu,jdbcType=INTEGER}
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+</mapper>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.fzz.cloud.fzzcloudlockingSystem.mapper.radmin.RadminMapper" >
+  <resultMap id="BaseResultMap" type="com.fzz.cloud.fzzcloudlockingSystem.entity.radmin.Radmin" >
+    <result column="id" property="id" jdbcType="VARCHAR" />
+    <result column="ad_name" property="adName" jdbcType="VARCHAR" />
+    <result column="user_id" property="userId" jdbcType="VARCHAR" />
+    <result column="parent_id" property="parentId" jdbcType="VARCHAR" />
+    <result column="username" property="username" jdbcType="VARCHAR" />
+    <!-- <result column="statu" property="statu" jdbcType="INTEGER" /> -->
+  </resultMap>
+  <insert id="insert" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.radmin.Radmin" >
+    insert into radmin (id, ad_name, user_id, 
+      parent_id, statu)
+    values (#{id,jdbcType=VARCHAR}, #{adName,jdbcType=VARCHAR}, #{userId,jdbcType=VARCHAR}, 
+      #{parentId,jdbcType=VARCHAR}, #{statu,jdbcType=INTEGER})
+  </insert>
+  <insert id="insertSelective" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.radmin.Radmin" >
+    insert into radmin
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+        id,
+      <if test="adName != null" >
+        ad_name,
+      </if>
+      <if test="userId != null" >
+        user_id,
+      </if>
+      <if test="parentId != null" >
+        parent_id,
+      </if>
+        statu,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+        UUID(),
+      <if test="adName != null" >
+        #{adName,jdbcType=VARCHAR},
+      </if>
+      <if test="userId != null" >
+        #{userId,jdbcType=VARCHAR},
+      </if>
+      <if test="parentId != null" >
+        #{parentId,jdbcType=VARCHAR},
+      </if>
+        0
+    </trim>
+  </insert>
+  
+  <select id="selectRadminByPage" parameterType="java.lang.String" resultMap="BaseResultMap">
+  	SELECT
+	r.id ,r.ad_name ,r.user_id ,r.parent_id ,u.username as username
+	FROM
+		radmin AS r
+	LEFT JOIN `user` AS u ON r.user_id = u.id
+	WHERE
+		r.parent_id = #{userId} and r.statu = 0
+  </select>
+  
+  <select id="selectRadmin" parameterType="java.lang.String" resultType="java.lang.String">
+  	select id from radmin where user_id = #{userId} and parent_id = #{parentId} and statu = 0
+  </select>
+  
+  <update id="deleteRadminById" parameterType="java.lang.String">
+  	update radmin set statu = 1 where id = #{id}
+  </update>
+</mapper>

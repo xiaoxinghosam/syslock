@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.fzz.cloud.fzzcloudlockingSystem.mapper.lock.SysLockMapper" >
+	
+  <!-- 结果集封装 -->
+  <resultMap id="BaseResultMap" type="com.fzz.cloud.fzzcloudlockingSystem.entity.lock.SysLock" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="admin_user_id" property="adminUserId" jdbcType="VARCHAR" />
+    <result column="lock_number" property="lockNumber" jdbcType="VARCHAR" />
+    <result column="lock_name" property="lockName" jdbcType="VARCHAR" />
+    <result column="allow" property="allow" jdbcType="VARCHAR" />
+    <result column="electricity" property="electricity" jdbcType="VARCHAR" />
+    <result column="admin_psw" property="adminPsw" jdbcType="VARCHAR" />
+    <result column="secret_key" property="secretKey" jdbcType="VARCHAR" />
+    <result column="parent_id" property="parentId" jdbcType="VARCHAR" />
+    <result column="key_id" property="keyId" jdbcType="VARCHAR" />
+    <result column="start_time" property="startTime" jdbcType="TIMESTAMP" />
+    <result column="end_time" property="endTime" jdbcType="TIMESTAMP" />
+    <!-- <result column="statu" property="statu" jdbcType="INTEGER" />
+    <result column="createtime" property="createtime" jdbcType="TIMESTAMP" /> -->
+  </resultMap>
+  
+  <!-- syslock列 -->
+  <sql id="Base_Column_List" >
+    id, admin_user_id, lock_number, lock_name, allow, electricity, admin_psw, statu, createtime,secret_key
+  </sql>
+  
+  <!-- 根据主键查询锁对象 -->
+  <select id="selectSysLockByLockId" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from syslock
+    where id = #{id,jdbcType=VARCHAR} and statu = 0
+  </select>
+  
+  <select id="selectSysLockAllow" parameterType="java.lang.String" resultType="java.lang.String">
+  	select
+  	allow from syslock where id = #{id,jdbcType=VARCHAR} and statu = 0
+  </select>
+  
+  <!-- 根据蓝牙mak地址查询锁对象 -->
+  <select id="selectSysLockByLockNumber" resultMap="BaseResultMap" parameterType="java.lang.String">
+   select 
+    <include refid="Base_Column_List" />
+    from syslock
+    where lock_number = #{lockNumber,jdbcType=VARCHAR} and statu = 0
+  </select>
+  
+  <!-- 根据多个id查询值 -->
+  <select id="selectSysLockByIds" resultMap="BaseResultMap">
+  	select
+  	<include refid="Base_Column_List" />
+  	from syslock
+  	<where>
+  		statu = 0 and id in
+  	  <foreach collection="ids" item="id" open="(" close=")" separator=",">  
+            #{id,jdbcType=VARCHAR}  
+      </foreach> 
+  	</where>
+  </select>
+  
+    <!-- 分页查询 -->
+  <select id="selectSysLockByPage" parameterType="java.lang.String" resultMap="BaseResultMap">
+  	SELECT
+	s.id,
+	s.admin_user_id,
+	s.lock_number,
+	s.allow,
+	s.secret_key,
+	s.electricity,
+	s.admin_psw,
+	su.key_name as lock_name,
+	su.start_time,
+	su.end_time,
+	su.parent_id,
+	su.id AS key_id
+		FROM
+			syslock AS s
+		LEFT JOIN syslock_user_subset AS su ON s.id = su.lock_id
+		WHERE
+			su.user_id = #{userId}
+		AND s.statu = 0
+		AND su.statu = 0
+		ORDER BY s.createtime DESC
+  </select>
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from syslock
+    where id = #{id,jdbcType=VARCHAR}
+  </delete>
+  
+  
+  <!-- 添加锁对象 -->
+  <insert id="insertSysLock" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.lock.SysLock" >
+    insert into syslock
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="adminUserId != null" >
+        admin_user_id,
+      </if>
+       <if test="secretKey != null" >
+        secret_key,
+      </if>
+      <if test="lockNumber != null" >
+        lock_number,
+      </if>
+      <if test="lockName != null" >
+        lock_name,
+      </if>
+      <if test="allow != null" >
+        allow,
+      </if>
+      <if test="electricity != null" >
+        electricity,
+      </if>
+      <if test="adminPsw != null" >
+        admin_psw,
+      </if>
+        statu,
+        createtime
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null">
+      	#{id,jdbcType=VARCHAR},
+      </if>
+      <if test="adminUserId != null" >
+        #{adminUserId,jdbcType=VARCHAR},
+      </if>
+      <if test="secretKey != null" >
+        #{secretKey,jdbcType=VARCHAR},
+      </if>
+      <if test="lockNumber != null" >
+        #{lockNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="lockName != null" >
+        #{lockName,jdbcType=VARCHAR},
+      </if>
+      <if test="allow != null" >
+        #{allow,jdbcType=VARCHAR},
+      </if>
+      <if test="electricity != null" >
+        #{electricity,jdbcType=VARCHAR},
+      </if>
+      <if test="adminPsw != null" >
+        #{adminPsw,jdbcType=VARCHAR},
+      </if>
+     	0, now()	
+    </trim>
+  </insert>
+  
+  
+ <!-- 根据id批量删除 锁包括指纹ic卡密码，操作记录-->
+ <update id="deleteSysLockByIds">
+	 UPDATE syslock AS SL
+		LEFT JOIN syslock_operatin_record AS SOR ON SOR.lock_id = SL.id
+		LEFT JOIN syslock_unlock AS SU ON SU.lock_id = SL.id
+	SET SL.statu = 1,
+		 SU.statu = 1,
+		 SOR.statu = 1
+	 <where>
+	 	AND SL.statu = 0 AND SL.id in
+	 	<foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id,jdbcType=VARCHAR}
+        </foreach>
+	 </where>
+  </update>
+  
+  <!-- 绑定安装人员 -->
+  <update id="installLockBinding" parameterType="java.lang.String">
+  	update syslock set
+  	<if test="installId != null">
+  		 install_id = #{installId}
+  	</if>
+  	where id = #{lockId}
+  </update>
+  
+  <update id="updateSysLockName" parameterType="java.lang.String">
+  	update syslock set lock_name = #{lockName} where id = #{id}
+  </update>
+  
+  <!-- 根据id删除一个锁 包括指纹ic卡密码，操作记录-->
+  <update id="deleteBySysLockId" parameterType="java.lang.String">
+   UPDATE syslock as sl LEFT JOIN room as r on r.lock_id = sl.id
+	SET
+	sl.statu = 1 , r.lock_id = null
+	<where>
+		  and sl.id = #{id}
+	</where>
+  </update>
+  
+ <!--  <update id="updateBySysLockModel" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.lock.SysLockModel" >
+    update syslock
+    <set >
+      <if test="adminUserId != null" >
+        admin_user_id = #{adminUserId,jdbcType=VARCHAR},
+      </if>
+      <if test="lockName != null" >
+        lock_name = #{lockName,jdbcType=VARCHAR},
+      </if>
+      <if test="electricity != null" >
+        electricity = #{electricity,jdbcType=VARCHAR},
+      </if>
+      <if test="adminPsw != null" >
+        admin_psw = #{adminPsw,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+  </update> -->
+  <update id="updateBySysLockModel" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.lock.SysLockModel" >
+   UPDATE syslock AS t1
+	LEFT JOIN syslock_user_subset AS t2 ON t2.lock_id = t1.id
+	AND t1.admin_user_id = t2.user_id
+	<set >
+      <if test="adminUserId != null" >
+        t1.admin_user_id = #{adminUserId,jdbcType=VARCHAR},
+      </if>
+      <if test="lockName != null" >
+        t1.lock_name = #{lockName,jdbcType=VARCHAR},t2.key_name = #{lockName,jdbcType=VARCHAR},
+      </if>
+      <if test="electricity != null" >
+        t1.electricity = #{electricity,jdbcType=VARCHAR},
+      </if>
+      <if test="adminPsw != null" >
+        t1.admin_psw = #{adminPsw,jdbcType=VARCHAR},
+      </if>
+    </set>
+	WHERE
+		t1.id = #{id,jdbcType=VARCHAR}
+  </update>
+  
+  <update id="updateByPrimaryKey" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.lock.SysLock" >
+    update syslock
+    set lock_number = #{lockNumber,jdbcType=VARCHAR},
+      lock_name = #{lockName,jdbcType=VARCHAR},
+      allow = #{allow,jdbcType=VARCHAR},
+      electricity = #{electricity,jdbcType=VARCHAR},
+      admin_psw = #{adminPsw,jdbcType=VARCHAR},
+      status = #{status,jdbcType=INTEGER},
+      createtime = #{createtime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+</mapper>

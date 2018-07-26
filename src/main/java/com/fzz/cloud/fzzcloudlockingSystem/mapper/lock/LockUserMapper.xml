@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.fzz.cloud.fzzcloudlockingSystem.mapper.lock.LockUserMapper" >
+
+  <resultMap id="BaseResultMap" type="com.fzz.cloud.fzzcloudlockingSystem.entity.lock.LockUser" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="lock_Id" property="lockId" jdbcType="VARCHAR" />
+    <result column="uid" property="uid" jdbcType="VARCHAR" />
+    <result column="createtime" property="createtime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  
+  <sql id="Base_Column_List" >
+    id, lock_Id, uid, createtime
+  </sql>
+  
+  
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from lock_user
+    where id = #{id,jdbcType=VARCHAR}
+  </select>
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from lock_user
+    where id = #{id,jdbcType=VARCHAR}
+  </delete>
+  
+  <!-- 添加锁与用户的关系 -->
+  <insert id="insertLockUser" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.lock.LockUser" >
+    insert into lock_user
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+        id,
+      <if test="lockId != null" >
+        lock_Id,
+      </if>
+      <if test="uid != null" >
+        uid,
+      </if>
+        createtime,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+       UUID(),
+      <if test="lockId != null" >
+        #{lockId,jdbcType=VARCHAR},
+      </if>
+      <if test="uid != null" >
+        #{uid,jdbcType=VARCHAR},
+      </if>
+       now()
+    </trim>
+  </insert>
+  
+  
+  <update id="updateByPrimaryKeySelective" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.lock.LockUser" >
+    update lock_user
+    <set >
+      <if test="lockId != null" >
+        lock_Id = #{lockId,jdbcType=VARCHAR},
+      </if>
+      <if test="uid != null" >
+        uid = #{uid,jdbcType=VARCHAR},
+      </if>
+      <if test="createtime != null" >
+        createtime = #{createtime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.lock.LockUser" >
+    update lock_user
+    set lock_Id = #{lockId,jdbcType=VARCHAR},
+      uid = #{uid,jdbcType=VARCHAR},
+      createtime = #{createtime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+</mapper>

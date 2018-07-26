@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.fzz.cloud.fzzcloudlockingSystem.mapper.unlock.UnlockMapper" >
+
+  <!-- Map映射 -->
+  <resultMap id="BaseResultMap" type="com.fzz.cloud.fzzcloudlockingSystem.entity.unlock.Unlock" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="lock_id" property="lockId" jdbcType="VARCHAR" />
+    <result column="unlock_name" property="unlockName" jdbcType="VARCHAR" />
+    <result column="unlock_flag" property="unlockFlag" jdbcType="VARCHAR" />
+    <result column="add_person" property="addPerson" jdbcType="VARCHAR" />
+    <result column="for_way" property="forWay" jdbcType="VARCHAR" />
+    <result column="start_time" property="startTime" jdbcType="TIMESTAMP" />
+    <result column="end_time" property="endTime" jdbcType="TIMESTAMP" />
+    <result column="add_type" property="addType" jdbcType="INTEGER" />
+    <result column="unlock_type" property="unlockType" jdbcType="INTEGER" />
+    <!-- <result column="statu" property="statu" jdbcType="INTEGER" />
+    <result column="createtime" property="createtime" jdbcType="TIMESTAMP" /> -->
+  </resultMap>
+  
+  <!-- 列 -->
+  <sql id="Base_Column_List" >
+    id, lock_id, unlock_name, unlock_flag, add_person, for_way, start_time, end_time, 
+    add_type, unlock_type, statu, createtime
+  </sql>
+  
+  <!-- 根据主键查询对象详情 -->
+  <select id="selectUnlockById" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    su.id,su.lock_id,su.unlock_name,su.unlock_flag,u.username as add_person,su.for_way,su.start_time,
+  	su.end_time,su.add_type,su.unlock_type,su.statu,su.createtime
+    from syslock_unlock su
+		LEFT JOIN `user` u ON u.id = su.add_person
+	where su.id = #{id} and su.statu = 0
+  </select>
+  
+  <!-- 分页查询对象 -->
+ <!--  <select id="selectUnlockByPage" resultMap="BaseResultMap" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.unlock.UnlockModel">
+  	select 
+  	su.id,su.lock_id,su.unlock_name,su.unlock_flag,u.username as add_person,su.for_way,su.start_time,
+  	su.end_time,su.add_type,su.unlock_type,su.statu,su.createtime
+    from syslock_unlock su
+		LEFT JOIN `user` u ON u.id = su.add_person
+    <where>
+   		<if test="childrenList != null">
+   			and su.id in
+   		 <foreach item="userId" collection="childrenList" separator="," open="(" close=")" index="">
+               (
+               select s.id from syslock_unlock as s 
+               where 
+               s.add_person = #{userId} 
+               and s.lock_id = #{lockId} 
+               and s.add_type = #{addType} 
+               and s.statu = 0
+               )
+          </foreach>
+   		</if>
+    </where>
+  </select> -->
+  
+  <select id="selectUnlockByPage" resultMap="BaseResultMap" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.unlock.UnlockModel">
+  	SELECT
+	su.id,
+	su.lock_id,
+	su.unlock_name,
+	su.unlock_flag,
+	u.username AS add_person,
+	su.for_way,
+	su.start_time,
+	su.end_time,
+	su.add_type,
+	su.unlock_type,
+	su.statu,
+	su.createtime
+	FROM
+		syslock_unlock su
+	LEFT JOIN `user` u ON u.id = su.add_person
+	<where>
+		AND su.statu = 0
+		AND su.lock_id = #{lockId}
+		<if test="childrenList != null">
+			<if test="addType != null and addType != 0">
+				AND su.add_type = #{addType}
+			</if>
+			AND su.add_person IN 
+			<foreach item="userId" collection="childrenList" separator="," open="(" close=")" index="">
+				#{userId}
+			</foreach>
+			<if test="addType != null and addType == 0">
+				AND (su.add_type = 0 OR su.add_type = 1)
+			</if>
+			AND su.statu = 0
+		</if>
+	</where>
+	ORDER BY su.createtime DESC
+  </select>
+  
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from syslock_unlock
+    where id = #{id,jdbcType=VARCHAR}
+  </delete>
+  
+  
+  <insert id="insert" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.unlock.Unlock" >
+    insert into syslock_unlock (id, lock_id, unlock_name, 
+      unlock_flag, add_person, for_way, 
+      start_time, end_time, add_type, 
+      unlock_type, statu, createtime
+      )
+    values (#{id,jdbcType=VARCHAR}, #{lockId,jdbcType=VARCHAR}, #{unlockName,jdbcType=VARCHAR}, 
+      #{unlockFlag,jdbcType=VARCHAR}, #{addPerson,jdbcType=VARCHAR}, #{forWay,jdbcType=VARCHAR}, 
+      #{startTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP}, #{addType,jdbcType=INTEGER}, 
+      #{unlockType,jdbcType=INTEGER}, #{statu,jdbcType=INTEGER}, #{createtime,jdbcType=TIMESTAMP}
+      )
+  </insert>
+  
+  <!-- 添加开锁对象 -->
+  <insert id="insertUnlock" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.unlock.Unlock" >
+    insert into syslock_unlock
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+        id,
+      <if test="lockId != null" >
+        lock_id,
+      </if>
+      <if test="unlockName != null" >
+        unlock_name,
+      </if>
+      <if test="unlockFlag != null" >
+        unlock_flag,
+      </if>
+      <if test="addPerson != null" >
+        add_person,
+      </if>
+      <if test="forWay != null" >
+        for_way,
+      </if>
+      <if test="startTime != null" >
+        start_time,
+      </if>
+      <if test="endTime != null" >
+        end_time,
+      </if>
+      <if test="addType != null" >
+        add_type,
+      </if>
+      <if test="unlockType != null" >
+        unlock_type,
+      </if>
+        statu,createtime,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+        UUID(),
+      <if test="lockId != null" >
+        #{lockId,jdbcType=VARCHAR},
+      </if>
+      <if test="unlockName != null" >
+        #{unlockName,jdbcType=VARCHAR},
+      </if>
+      <if test="unlockFlag != null" >
+        #{unlockFlag,jdbcType=VARCHAR},
+      </if>
+      <if test="addPerson != null" >
+        #{addPerson,jdbcType=VARCHAR},
+      </if>
+      <if test="forWay != null" >
+        #{forWay,jdbcType=VARCHAR},
+      </if>
+      <if test="startTime != null" >
+        #{startTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="endTime != null" >
+        #{endTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="addType != null" >
+        #{addType,jdbcType=INTEGER},
+      </if>
+      <if test="unlockType != null" >
+        #{unlockType,jdbcType=INTEGER},
+      </if>
+        0, now()
+    </trim>
+  </insert>
+  
+  	<!-- 根据id批量删除 -->
+  <update id="delectUnlockIds">
+	update syslock_unlock
+	set
+	statu = 1
+	where id in
+	<foreach collection="ids" item="id" separator="," open="(" close=")">
+		#{id,jdbcType=VARCHAR}
+	</foreach>
+  </update>
+  
+  <update id="deleteUnlockAll" parameterType="java.lang.String">
+  	update syslock_unlock
+	<set>
+		statu = 1
+	</set>
+	<where>
+		<if test="type != null">
+			and add_type = #{type,jdbcType=INTEGER}
+		</if>
+		<if test="lockId != null and lockId != ''">
+			and lock_id = #{lockId,jdbcType=INTEGER}
+		</if>
+	</where>
+  </update>
+	 
+  
+  <update id="updateUnlock" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.unlock.Unlock" >
+    update syslock_unlock
+    <set >
+      <if test="lockId != null" >
+        lock_id = #{lockId,jdbcType=VARCHAR},
+      </if>
+      <if test="unlockName != null" >
+        unlock_name = #{unlockName,jdbcType=VARCHAR},
+      </if>
+      <if test="unlockFlag != null" >
+        unlock_flag = #{unlockFlag,jdbcType=VARCHAR},
+      </if>
+      <if test="addPerson != null" >
+        add_person = #{addPerson,jdbcType=VARCHAR},
+      </if>
+      <if test="forWay != null" >
+        for_way = #{forWay,jdbcType=VARCHAR},
+      </if>
+      <if test="startTime != null" >
+        start_time = #{startTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="endTime != null" >
+        end_time = #{endTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="addType != null" >
+        add_type = #{addType,jdbcType=INTEGER},
+      </if>
+      <if test="unlockType != null" >
+        unlock_type = #{unlockType,jdbcType=INTEGER},
+      </if>
+        createtime = now()
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+  
+  
+  <update id="updateByPrimaryKey" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.unlock.Unlock" >
+    update syslock_unlock
+    set lock_id = #{lockId,jdbcType=VARCHAR},
+      unlock_name = #{unlockName,jdbcType=VARCHAR},
+      unlock_flag = #{unlockFlag,jdbcType=VARCHAR},
+      add_person = #{addPerson,jdbcType=VARCHAR},
+      for_way = #{forWay,jdbcType=VARCHAR},
+      start_time = #{startTime,jdbcType=TIMESTAMP},
+      end_time = #{endTime,jdbcType=TIMESTAMP},
+      add_type = #{addType,jdbcType=INTEGER},
+      unlock_type = #{unlockType,jdbcType=INTEGER},
+      statu = #{statu,jdbcType=INTEGER},
+      createtime = #{createtime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+</mapper>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.fzz.cloud.fzzcloudlockingSystem.mapper.operatin.OperatinMapper" >
+
+  <!-- 封装参数 -->
+  <resultMap id="BaseResultMap" type="com.fzz.cloud.fzzcloudlockingSystem.entity.operatin.Operatin" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="lock_id" property="lockId" jdbcType="VARCHAR" />
+    <result column="unlock_pwd" property="unlockPwd" jdbcType="VARCHAR" />
+    <result column="unlock_time" property="unlockTime" jdbcType="TIMESTAMP" />
+    <result column="unlock_type" property="unlockType" jdbcType="INTEGER" />
+<!--     <result column="statu" property="statu" jdbcType="INTEGER" />
+    <result column="createtime" property="createtime" jdbcType="TIMESTAMP" /> -->
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, lock_id, unlock_pwd, unlock_time, unlock_type, statu, createtime
+  </sql>
+  
+  <!-- 根据主键查询 -->
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from syslock_operatin_record
+    where id = #{id,jdbcType=VARCHAR}
+  </select>
+  
+  <!-- 分页查询记录 -->
+  <select id="selectOperatinByPage" resultMap="BaseResultMap"  parameterType="java.lang.String">
+  	SELECT
+	<include refid="Base_Column_List" />
+	FROM
+		syslock_operatin_record 
+	WHERE statu = 0
+	    <if test="lockId != null">
+	    	and lock_id = #{lockId,jdbcType=VARCHAR}
+	    </if>
+	    <if test="key != null and key != ''">
+	    	and unlock_type like "%"#{key}"%"
+	    </if>
+	    ORDER BY createtime DESC
+  </select>
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from syslock_operatin_record
+    where id = #{id,jdbcType=VARCHAR}
+  </delete>
+
+  <!-- 添加操作记录 -->
+  <insert id="insertOperatin" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.operatin.Operatin" >
+    insert into syslock_operatin_record
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+        id,
+      <if test="lockId != null" >
+        lock_id,
+      </if>
+      <if test="unlockPwd != null" >
+        unlock_pwd,
+      </if>
+      <if test="unlockTime != null" >
+        unlock_time,
+      </if>
+      <if test="unlockType != null" >
+        unlock_type,
+      </if>
+        statu,
+        createtime,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+       UUID(),
+      <if test="lockId != null" >
+        #{lockId,jdbcType=VARCHAR},
+      </if>
+      <if test="unlockPwd != null" >
+        #{unlockPwd,jdbcType=VARCHAR},
+      </if>
+      <if test="unlockTime != null" >
+        #{unlockTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="unlockType != null" >
+        #{unlockType,jdbcType=INTEGER},
+      </if>
+        0, now()
+    </trim>
+  </insert>
+  
+  
+  <insert id="insertOperatinBatch" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.operatin.Operatin" >
+  	INSERT INTO syslock_operatin_record 
+  	(id,lock_id,unlock_pwd,unlock_time,unlock_type,statu,createtime) 
+  	VALUES
+  	<foreach collection="list" item="operatin" separator=",">
+  		(uuid(),#{operatin.lockId},#{operatin.unlockPwd},#{operatin.unlockTime},#{operatin.unlockType},0,now())
+  	</foreach>
+  </insert>
+  
+  
+  
+  <update id="updateByPrimaryKeySelective" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.operatin.Operatin" >
+    update syslock_operatin_record
+    <set >
+      <if test="lockId != null" >
+        lock_id = #{lockId,jdbcType=VARCHAR},
+      </if>
+      <if test="unlockPwd != null" >
+        unlock_pwd = #{unlockPwd,jdbcType=VARCHAR},
+      </if>
+      <if test="unlockTime != null" >
+        unlock_time = #{unlockTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="unlockType != null" >
+        unlock_type = #{unlockType,jdbcType=INTEGER},
+      </if>
+      <if test="statu != null" >
+        statu = #{statu,jdbcType=INTEGER},
+      </if>
+      <if test="createtime != null" >
+        createtime = #{createtime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.fzz.cloud.fzzcloudlockingSystem.entity.operatin.Operatin" >
+    update syslock_operatin_record
+    set lock_id = #{lockId,jdbcType=VARCHAR},
+      unlock_pwd = #{unlockPwd,jdbcType=VARCHAR},
+      unlock_time = #{unlockTime,jdbcType=TIMESTAMP},
+      unlock_type = #{unlockType,jdbcType=INTEGER},
+      statu = #{statu,jdbcType=INTEGER},
+      createtime = #{createtime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+</mapper>
